@@ -1193,3 +1193,123 @@ body {
   font-size: 0.8rem;
   color: #999;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main {
+    flex-direction: column;
+  }
+
+  .map-container {
+    order: 1;
+    min-height: 50vh;
+    flex: none;
+  }
+
+  .sidebar,
+  .property-sidebar {
+    order: 2;
+    width: 100%;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .back-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  /* AI loading centered on mobile */
+  .ai-loading-overlay {
+    z-index: 100;
+  }
+
+  .ai-loading-card {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+
+  .ai-loading-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .progress-text {
+    font-size: 1.1rem;
+  }
+
+  .ai-loading-card h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Property info compact on mobile */
+  .property-info {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+  }
+
+  .property-info h2 {
+    font-size: 1rem;
+  }
+
+  .property-address {
+    font-size: 1rem;
+  }
+
+  /* Feedback section */
+  .feedback-section {
+    padding: 0.75rem;
+  }
+
+  .feedback-section h3 {
+    font-size: 0.85rem;
+  }
+
+  /* AI image fullscreen adjustments */
+  .ai-image-fullscreen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-image-fullscreen img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* Annotation toolbar mobile */
+  .annotation-toolbar {
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.4rem;
+    gap: 0.3rem;
+  }
+
+  .tool-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Search page mobile */
+  .search-hero {
+    padding: 2rem 1rem;
+  }
+
+  .logo-mark {
+    font-size: 2.5rem;
+  }
+
+  .tagline {
+    font-size: 1rem;
+  }
+
+  .search-wrapper {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+}
