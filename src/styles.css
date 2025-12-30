@@ -1260,15 +1260,6 @@ body {
     font-size: 1rem;
   }
 
-  /* Feedback section */
-  .feedback-section {
-    padding: 0.75rem;
-  }
-
-  .feedback-section h3 {
-    font-size: 0.85rem;
-  }
-
   /* AI image fullscreen adjustments */
   .ai-image-fullscreen {
     position: relative;
@@ -1282,17 +1273,11 @@ body {
     object-fit: contain;
   }
 
-  /* Annotation toolbar mobile */
-  .annotation-toolbar {
-    top: 0.5rem;
-    left: 0.5rem;
-    padding: 0.4rem;
-    gap: 0.3rem;
-  }
-
-  .tool-btn {
-    width: 36px;
-    height: 36px;
+  /* Hide annotation tools and feedback section on mobile */
+  .annotation-toolbar,
+  .annotation-layer-v2,
+  .feedback-section {
+    display: none;
   }
 
   /* Search page mobile */
