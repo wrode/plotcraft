@@ -145,19 +145,21 @@ export default function App() {
                 </Show>
               </div>
 
-              {/* Debug mode toggle */}
-              <div class="debug-toggle">
-                <input
-                  type="checkbox"
-                  id="debug-mode"
-                  checked={debugMode()}
-                  onChange={(e) => setDebugMode(e.target.checked)}
-                />
-                <label for="debug-mode">Debug mode</label>
-              </div>
+              {/* Debug mode toggle - dev only */}
+              <Show when={import.meta.env.DEV}>
+                <div class="debug-toggle">
+                  <input
+                    type="checkbox"
+                    id="debug-mode"
+                    checked={debugMode()}
+                    onChange={(e) => setDebugMode(e.target.checked)}
+                  />
+                  <label for="debug-mode">Debug mode</label>
+                </div>
+              </Show>
 
               {/* AI controls - only visible in debug mode */}
-              <Show when={debugMode()}>
+              <Show when={import.meta.env.DEV && debugMode()}>
                 <div class="ai-controls">
                   <h3>AI Hagedesign</h3>
 
