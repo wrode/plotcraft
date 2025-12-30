@@ -1,97 +1,143 @@
-import { createSignal, Show, Match, Switch, For } from 'solid-js';
-import AddressSearch from './components/AddressSearch';
-import Map from './components/Map';
+import { createSignal, Show, Match, Switch, For, onMount, onCleanup } from 'solid-js';
 import PropertyCanvas from './components/PropertyCanvas';
 import { AI_MODELS } from './api/openrouter';
 
 export default function App() {
-  const [selectedAddress, setSelectedAddress] = createSignal(null);
-  const [showParcels, setShowParcels] = createSignal(true);
-  const [viewMode, setViewMode] = createSignal('search'); // 'search' | 'property'
+  const [uploadedImage, setUploadedImage] = createSignal(null);
+  const [viewMode, setViewMode] = createSignal('upload'); // 'upload' | 'render'
+  const [isDragging, setIsDragging] = createSignal(false);
 
   // AI settings
   const [selectedModel, setSelectedModel] = createSignal('gemini-3-pro-image');
-  const [gardenStyle, setGardenStyle] = createSignal('modern scandinavian');
   const [triggerGenerate, setTriggerGenerate] = createSignal(0);
-  const [mapType, setMapType] = createSignal('ortho'); // 'ortho' | 'topo'
-  const [aiMode, setAiMode] = createSignal('current'); // 'current' | 'design'
   const [debugMode, setDebugMode] = createSignal(false);
   const [annotations, setAnnotations] = createSignal([]);
 
-  const handleAddressSelect = (address) => {
-    setAnnotations([]); // Clear annotations when selecting new address
-    setSelectedAddress(address);
-    // Auto-navigate to property view when address selected
-    setViewMode('property');
-    // AI generation is auto-triggered in PropertyCanvas when images are ready
+  let fileInputRef;
+  let dropZoneRef;
+
+  // Handle file selection
+  const handleFileSelect = (file) => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImage(e.target.result);
+        setViewMode('render');
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleBackToSearch = () => {
-    setViewMode('search');
-    setSelectedAddress(null);
+  // Handle drag events
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    handleFileSelect(file);
+  };
+
+  // Handle paste from clipboard
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        handleFileSelect(file);
+        break;
+      }
+    }
+  };
+
+  // Set up paste listener
+  onMount(() => {
+    document.addEventListener('paste', handlePaste);
+  });
+
+  onCleanup(() => {
+    document.removeEventListener('paste', handlePaste);
+  });
+
+  const handleBackToUpload = () => {
+    setViewMode('upload');
+    setUploadedImage(null);
+    setAnnotations([]);
   };
 
   const handleGenerateDesign = () => {
     setTriggerGenerate(t => t + 1);
   };
 
-  const mapCenter = () => {
-    const addr = selectedAddress();
-    if (addr && addr.lat && addr.lon) {
-      return {
-        lat: addr.lat,
-        lon: addr.lon,
-        text: addr.text,
-      };
-    }
-    return null;
-  };
-
-  const gardenStyles = [
-    { value: 'modern scandinavian', label: 'Moderne skandinavisk' },
-    { value: 'traditional norwegian', label: 'Tradisjonell norsk' },
-    { value: 'cottage garden', label: 'Cottage hage' },
-    { value: 'minimalist zen', label: 'Minimalistisk zen' },
-    { value: 'wildlife friendly', label: 'Naturvennlig' },
-  ];
-
   return (
     <div class="app">
-      <Show when={viewMode() === 'property'}>
+      <Show when={viewMode() === 'render'}>
         <header class="header">
-          <button class="back-button" onClick={handleBackToSearch}>
+          <button class="back-button" onClick={handleBackToUpload}>
             ← Back
           </button>
-          <h1>PlotCraft</h1>
+          <h1>RoomCraft</h1>
         </header>
       </Show>
 
       <main class="main">
         <Switch>
-          {/* Search mode - clean homepage */}
-          <Match when={viewMode() === 'search'}>
-            <div class="search-page">
-              <div class="search-hero">
-                <div class="logo-mark">PlotCraft</div>
-                <p class="tagline">Skriv inn adressen din for å komme i gang</p>
-                <div class="search-wrapper">
-                  <AddressSearch onSelect={handleAddressSelect} />
+          {/* Upload mode - clean homepage */}
+          <Match when={viewMode() === 'upload'}>
+            <div class="upload-page">
+              <div class="upload-hero">
+                <h1 class="logo-mark">RoomCraft</h1>
+                <p class="tagline">Transform floor plans into stunning 3D renders</p>
+
+                <div
+                  ref={dropZoneRef}
+                  class={`upload-zone ${isDragging() ? 'dragging' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef?.click()}
+                >
+                  <div class="upload-icon">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M3 16v2a2 2 0 002 2h14a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <p class="upload-text">Drag and drop your floor plan here</p>
+                  <p class="upload-subtext">or</p>
+                  <button class="upload-btn">Choose file</button>
+                  <p class="upload-hint">PNG, JPEG or AVIF, max 10 MB</p>
+                  <p class="upload-paste-hint">You can also paste an image (Ctrl+V / Cmd+V)</p>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style="display: none"
+                    onChange={(e) => handleFileSelect(e.target.files[0])}
+                  />
                 </div>
               </div>
             </div>
           </Match>
 
-          {/* Property mode */}
-          <Match when={viewMode() === 'property'}>
+          {/* Render mode */}
+          <Match when={viewMode() === 'render'}>
             <div class="map-container">
               <PropertyCanvas
-                center={mapCenter()}
-                showParcels={showParcels()}
+                uploadedImage={uploadedImage()}
                 aiModel={selectedModel()}
-                aiMode={aiMode()}
-                gardenStyle={gardenStyle()}
                 triggerGenerate={triggerGenerate()}
-                mapType={mapType()}
                 debugMode={debugMode()}
                 annotations={annotations()}
                 onAnnotationsChange={setAnnotations}
@@ -100,23 +146,17 @@ export default function App() {
 
             <aside class="sidebar property-sidebar">
               <div class="property-info">
-                <h2>Din eiendom</h2>
-                <p class="property-address">{selectedAddress()?.text}</p>
+                <h2>Your Floor Plan</h2>
                 <p class="property-details">
-                  {selectedAddress()?.postalCode} {selectedAddress()?.postalPlace}
+                  AI will transform this into a photorealistic 3D render
                 </p>
-                <Show when={selectedAddress()?.gardsnummer}>
-                  <p class="property-gnr">
-                    Gnr/Bnr: {selectedAddress()?.gardsnummer}/{selectedAddress()?.bruksnummer}
-                  </p>
-                </Show>
               </div>
 
               {/* Feedback section - always visible */}
               <div class="feedback-section">
-                <h3>Juster design</h3>
+                <h3>Adjust Design</h3>
                 <p class="feedback-hint">
-                  Bruk verktøyene for å markere endringer på bildet
+                  Use the tools to mark changes on the image
                 </p>
                 <Show when={annotations().length > 0}>
                   <div class="annotations-list">
@@ -130,17 +170,17 @@ export default function App() {
                             {annotation.type === 'text' && 'T'}
                           </span>
                           <span class="annotation-text">
-                            {annotation.type === 'arrow' && (annotation.text || 'Pil')}
-                            {annotation.type === 'path' && 'Strek'}
-                            {annotation.type === 'highlight' && 'Markert område'}
-                            {annotation.type === 'text' && (annotation.text || 'Tekst')}
+                            {annotation.type === 'arrow' && (annotation.text || 'Arrow')}
+                            {annotation.type === 'path' && 'Line'}
+                            {annotation.type === 'highlight' && 'Highlighted area'}
+                            {annotation.type === 'text' && (annotation.text || 'Text')}
                           </span>
                         </div>
                       )}
                     </For>
                   </div>
                   <button class="regenerate-btn" onClick={handleGenerateDesign}>
-                    Generer ny versjon
+                    Generate new version
                   </button>
                 </Show>
               </div>
@@ -161,46 +201,10 @@ export default function App() {
               {/* AI controls - only visible in debug mode */}
               <Show when={import.meta.env.DEV && debugMode()}>
                 <div class="ai-controls">
-                  <h3>AI Hagedesign</h3>
+                  <h3>AI Settings</h3>
 
                   <div class="control-group">
-                    <label>Modus</label>
-                    <div class="map-type-toggle">
-                      <button
-                        class={aiMode() === 'current' ? 'active' : ''}
-                        onClick={() => setAiMode('current')}
-                      >
-                        Kartlegg
-                      </button>
-                      <button
-                        class={aiMode() === 'design' ? 'active' : ''}
-                        onClick={() => setAiMode('design')}
-                      >
-                        Design
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label>Karttype</label>
-                    <div class="map-type-toggle">
-                      <button
-                        class={mapType() === 'ortho' ? 'active' : ''}
-                        onClick={() => setMapType('ortho')}
-                      >
-                        Satellitt
-                      </button>
-                      <button
-                        class={mapType() === 'topo' ? 'active' : ''}
-                        onClick={() => setMapType('topo')}
-                      >
-                        Topo
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="control-group">
-                    <label for="model-select">AI Modell</label>
+                    <label for="model-select">AI Model</label>
                     <select
                       id="model-select"
                       value={selectedModel()}
@@ -216,39 +220,9 @@ export default function App() {
                     </select>
                   </div>
 
-                  <Show when={aiMode() === 'design'}>
-                    <div class="control-group">
-                      <label for="style-select">Hagestil</label>
-                      <select
-                        id="style-select"
-                        value={gardenStyle()}
-                        onChange={(e) => setGardenStyle(e.target.value)}
-                      >
-                        <For each={gardenStyles}>
-                          {(style) => (
-                            <option value={style.value}>{style.label}</option>
-                          )}
-                        </For>
-                      </select>
-                    </div>
-                  </Show>
-
                   <button class="generate-btn" onClick={handleGenerateDesign}>
-                    {aiMode() === 'current' ? 'Kartlegg hage' : 'Generer design'}
+                    Generate render
                   </button>
-                </div>
-
-                <div class="layer-controls">
-                  <h3>Kartlag</h3>
-                  <div class="layer-toggle">
-                    <input
-                      type="checkbox"
-                      id="parcels-property"
-                      checked={showParcels()}
-                      onChange={(e) => setShowParcels(e.target.checked)}
-                    />
-                    <label for="parcels-property">Eiendomsgrenser</label>
-                  </div>
                 </div>
               </Show>
             </aside>
