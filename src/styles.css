@@ -1330,9 +1330,10 @@ body {
     padding: 2rem 1.5rem;
   }
 
-  /* Hide drag/drop text on mobile - not relevant */
+  /* Hide drag/drop and paste text on mobile - not relevant */
   .upload-text,
-  .upload-subtext {
+  .upload-subtext,
+  .upload-paste-hint {
     display: none;
   }
 
