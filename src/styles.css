@@ -1095,7 +1095,7 @@ body {
 .regenerate-btn {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #e63946 0%, #d62839 100%);
+  background: linear-gradient(135deg, #2d5a27 0%, #1e3d1a 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -1106,9 +1106,9 @@ body {
 }
 
 .regenerate-btn:hover {
-  background: linear-gradient(135deg, #d62839 0%, #c01c28 100%);
+  background: linear-gradient(135deg, #3a7233 0%, #2d5a27 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 90, 39, 0.3);
 }
 
 .regenerate-btn:active {
