@@ -29,6 +29,47 @@ export default function PropertyCanvas(props) {
   let aiImageRef = null; // Reference to the AI-generated image element
   const [userFeedback, setUserFeedback] = createSignal(null);
 
+  // Remove background (white/light areas) and make transparent
+  const removeBackground = (imageDataUrl, threshold = 240) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Make light/white pixels transparent
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // Check if pixel is light (close to white)
+          // Also check for light gray backgrounds
+          const brightness = (r + g + b) / 3;
+          const isWhitish = r > threshold && g > threshold && b > threshold;
+          const isLightGray = brightness > 200 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20;
+
+          if (isWhitish || isLightGray) {
+            // Make fully transparent
+            data[i + 3] = 0;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(imageDataUrl); // Fallback to original
+      img.src = imageDataUrl;
+    });
+  };
+
   // Capture the AI image with annotations baked in
   const captureAnnotatedImage = async () => {
     const currentImage = aiResponse()?.image;
@@ -681,6 +722,12 @@ export default function PropertyCanvas(props) {
         model: result.model
       });
 
+      // Remove white/light background to make it transparent
+      if (result.image) {
+        const transparentImage = await removeBackground(result.image);
+        result.image = transparentImage;
+      }
+
       setAiProgress(100);
       setAiResponse(result);
 
@@ -891,7 +938,10 @@ export default function PropertyCanvas(props) {
       {/* AI Generated Image - fullscreen centered with annotation layer */}
       <Show when={aiResponse()?.image}>
         <div class="ai-image-fullscreen">
-          <img src={aiResponse()?.image} alt="Generated garden plan" />
+          {/* Background map layer */}
+          <img src={satelliteImage()} alt="Satellite map" class="ai-image-background" />
+          {/* Transparent AI overlay */}
+          <img src={aiResponse()?.image} alt="Generated garden plan" class="ai-image-overlay" />
           <AnnotationLayer
             initialAnnotations={props.annotations}
             onAnnotationsChange={(annotations) => props.onAnnotationsChange?.(annotations)}

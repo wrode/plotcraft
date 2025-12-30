@@ -805,9 +805,18 @@ body {
 }
 
 .ai-image-fullscreen img {
+  position: absolute;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+.ai-image-fullscreen .ai-image-background {
+  z-index: 1;
+}
+
+.ai-image-fullscreen .ai-image-overlay {
+  z-index: 2;
 }
 
 .ai-close-btn {
